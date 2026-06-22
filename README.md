@@ -1,14 +1,35 @@
-<h1 align="center">nyaapi-rs</h1>
+# nyaapi-rs
 
-This is an unofficial API for nyaa - https://nyaa.si or https://nyaa.land or whatever domain you want to use. This allows you to search for torrents by name, category, or even user. Use at your own risk.
+[![Crates.io](https://img.shields.io/crates/v/nyaapi-rs.svg)](https://crates.io/crates/nyaapi-rs)
+[![Docs.rs](https://img.shields.io/docsrs/nyaapi-rs/latest)](https://docs.rs/nyaapi-rs)
+[![Crates.io license](https://img.shields.io/crates/l/nyaapi-rs.svg)](LICENSE)
 
-<div align="center">
+Unofficial async API wrapper for [nyaa.si](https://nyaa.si) and compatible instances. Search torrents by query, category, user, or fetch details directly.
 
-[![npm](https://img.shields.io/crates/v/nyaapi-rs?style=flat-square)](https://crates.io/crates/nyaapi-rs)
-[![npm](https://img.shields.io/crates/d/nyaapi-rs?style=flat-square)](https://crates.io/crates/nyaapi-rs)
-![NPM](https://img.shields.io/crates/l/nyaapi-rs)
+Works with any nyaa instance (e.g. `nyaa.si`, `nyaa.land`) via the `base_url` option.
 
-</div>
+<details>
+<summary>Table of Contents</summary>
+
+- [Install](#install)
+- [Usage](#usage)
+- [CLI Example](#cli-example)
+- [API Reference](#api-reference)
+  - [`Nyaa`](#nyaasearchoptions-)
+  - [`SearchOptions`](#searchoptions)
+  - [`SearchByUserOptions`](#searchbyuseroptions)
+  - [`Torrent`](#torrent)
+  - [`TorrentDetail`](#torrentdetail)
+  - [`SearchResult`](#searchresult)
+  - [`Category`](#category)
+  - [`NyaaOptions` and modes](#nyaaoptions-and-modes)
+- [RSS Mode](#rss-mode)
+- [Features](#features)
+- [Contributing](#contributing)
+- [License](#license)
+- [Disclaimer](#disclaimer)
+
+</details>
 
 ## Install
 
@@ -35,180 +56,297 @@ async fn main() {
 
     let result = nyaa.search("One Piece").await.unwrap();
 
-    println!("{:#?}", result.data);
+    println!("Page {}", result.page);
+    if let Some(total) = result.total {
+        println!("Total: {}", total);
+    }
+    for torrent in result.data {
+        println!(
+            "[{}] {} | S:{} L:{} | {}",
+            torrent.id, torrent.name, torrent.seeders, torrent.leechers, torrent.date
+        );
+    }
 }
 ```
 
-## API
+## CLI Example
 
-### `new Nyaa(options)`
+A CLI is included under `examples/`. Run it with:
 
-Create a new Nyaa instance.
-
-#### `options`
-
-```js
-{
-    baseUrl: 'https://nyaa.si', // The base URL of the nyaa instance
-    mode: 'html', // 'html' or 'rss'
-}
+```bash
+cargo run --example example -- search "One Piece"
+cargo run --example example -- search "One Piece" --category anime --sort seeders --order desc --page 2
+cargo run --example example -- search-by-user Fan-Kai --query "One Piece"
+cargo run --example example -- view 2099890
+cargo run --example example -- categories
+cargo run --example example -- search "Anime" --mode rss --base-url https://nyaa.land
 ```
 
-### `search(query, options)`
+## API Reference
+
+### `Nyaa::search(query, options)`
 
 Search for torrents.
 
-#### `query`
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `query` | `impl Into<String>` | `""` | Search query string |
+| `page` | `Option<u64>` | `1` | Page number |
+| `category` | `Option<CategoryFilter>` | `All` | Category filter |
+| `filter` | `Option<TrustedFilter>` | `NoFilter` | Trust filter |
+| `sort` | `Option<SortBy>` | `Date` | Sort field |
+| `order` | `Option<Order>` | `Desc` | Sort order |
 
-Type: `string`
+Returns `Result<SearchResult, NyaaError>`.
 
-The search query.
+### `Nyaa::search_by_user(username, options)`
 
-#### `options`
+Search for torrents uploaded by a user.
 
-```jsonc
-{
-    "page": 1,
-    "category": "all", // all, anime, audio, literature, live-action, pictures, software, games
-    "filter": "no filter", // no filter, trusted only, no remakes
-    "sort": "date", // date, downloads, size, seeders, leechers, comments
-    "order": "desc" // desc, asc
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `username` | `impl Into<String>` | — | Uploader username |
+| `page` | `Option<u64>` | `1` | Page number |
+| `category` | `Option<CategoryFilter>` | `All` | Category filter |
+| `filter` | `Option<TrustedFilter>` | `NoFilter` | Trust filter |
+| `sort` | `Option<SortBy>` | `Date` | Sort field |
+| `order` | `Option<Order>` | `Desc` | Sort order |
+| `query` | `Option<String>` | `None` | Optional search query |
+
+Returns `Result<Vec<Torrent>, NyaaError>`.
+
+### `Nyaa::view(id)`
+
+Get full torrent details by ID.
+
+Returns `Result<Option<TorrentDetail>, NyaaError>`.
+
+### `Nyaa::view_from_torrent(torrent)`
+
+Fetch details using a `Torrent` object's `view_url`.
+
+Returns `Result<Option<TorrentDetail>, NyaaError>`.
+
+### `Nyaa::get_categories()`
+
+Fetch the category tree from the instance root.
+
+Returns `Result<Vec<Category>, NyaaError>`.
+
+---
+
+### `SearchOptions`
+
+```rust
+pub struct SearchOptions {
+    pub page: Option<u64>,
+    pub category: Option<CategoryFilter>,
+    pub filter: Option<TrustedFilter>,
+    pub sort: Option<SortBy>,
+    pub order: Option<Order>,
 }
 ```
 
-#### Returns
+### `SearchByUserOptions`
 
-```typescript
-interface SearchResult {
-    data: Torrent[];
-    total: number | null;
-    page: number;
-    totalPage: number | null;
-    perPage: number;
-    nextPage: boolean;
-    range: string | null;
-    timeTaken: number;
-}
-
-interface Torrent {
-    id: number;
-    name: string;
-    magnet: string;
-    size: string;
-    category: string;
-    date: Date;
-    seeders: number;
-    leechers: number;
-    downloads: number;
-    viewUrl: string;
-    torrentUrl: string;
-    comments: number;
+```rust
+pub struct SearchByUserOptions {
+    pub page: Option<u64>,
+    pub category: Option<CategoryFilter>,
+    pub filter: Option<TrustedFilter>,
+    pub sort: Option<SortBy>,
+    pub order: Option<Order>,
+    pub query: Option<String>,
 }
 ```
 
-### `searchByUser(username, options)`
+### `SearchResult`
 
-Search for torrents by user.
-
-#### `username`
-
-Type: `string`
-
-The username.
-
-#### `options`
-
-```jsonc
-{
-    "page": 1,
-    "category": "all",
-    "filter": "no filter",
-    "sort": "date",
-    "order": "desc",
-    "query": "One Piece"
+```rust
+pub struct SearchResult {
+    pub data: Vec<Torrent>,
+    pub total: Option<u64>,
+    pub page: u64,
+    pub total_page: Option<u64>,
+    pub per_page: usize,
+    pub range: Option<String>,
+    pub next_page: bool,
+    pub time_taken: u128,
 }
 ```
 
-### `view(id)`
+### `Torrent`
 
-Get torrent details by ID.
-
-#### `id`
-
-Type: `number`
-
-The torrent ID.
-
-#### Returns
-
-```typescript
-interface TorrentDetail {
-    id: number;
-    title: string;
-    name: string;
-    category: string;
-    subCategory: string;
-    date: Date;
-    seeders: number;
-    leechers: number;
-    downloads: number;
-    completed: number;
-    magnet: string;
-    size: string;
-    hash: string;
-    submitter: string;
-    submitterId?: string;
-    information?: string;
-    description: string;
-    files: TorrentFile[];
-    comments: number;
-}
-
-interface TorrentFile {
-    name: string;
-    size: string;
+```rust
+pub struct Torrent {
+    pub id: u64,
+    pub name: String,
+    pub magnet: String,
+    pub size: String,
+    pub category: String,
+    pub sub_category: Option<String>,
+    pub date: DateTime<Utc>,
+    pub seeders: u64,
+    pub leechers: u64,
+    pub downloads: u64,
+    pub hash: Option<String>,
+    pub submitter: Option<String>,
+    pub submitter_id: Option<String>,
+    pub information: Option<String>,
+    pub completed: Option<u64>,
+    pub description: Option<String>,
+    pub torrent_url: Option<String>,
+    pub view_url: Option<String>,
+    pub comments: Option<u64>,
 }
 ```
 
-### `viewFromTorrent(torrent)`
+### `TorrentDetail`
 
-Get torrent details from a Torrent object.
-
-#### `torrent`
-
-Type: `Torrent`
-
-### `getCategories()`
-
-Get the list of categories.
-
-```typescript
-interface Category {
-    id: string;
-    name: string;
-    subCategories?: Category[];
+```rust
+pub struct TorrentDetail {
+    pub id: u64,
+    pub title: String,
+    pub name: String,
+    pub category: String,
+    pub sub_category: String,
+    pub date: DateTime<Utc>,
+    pub seeders: u64,
+    pub leechers: u64,
+    pub downloads: u64,
+    pub completed: Option<u64>,
+    pub magnet: String,
+    pub size: String,
+    pub hash: Option<String>,
+    pub submitter: Option<String>,
+    pub submitter_id: Option<String>,
+    pub information: Option<String>,
+    pub description: String,
+    pub files: Vec<TorrentFile>,
+    pub comments: u64,
 }
 ```
+
+### `TorrentFile`
+
+```rust
+pub struct TorrentFile {
+    pub name: String,
+    pub size: String,
+}
+```
+
+### `Category`
+
+```rust
+pub struct Category {
+    pub id: String,
+    pub name: String,
+    pub sub_categories: Vec<Category>,
+}
+```
+
+### `CategoryFilter`
+
+```rust
+pub enum CategoryFilter {
+    All,
+    Anime,
+    Audio,
+    Literature,
+    LiveAction,
+    Pictures,
+    Software,
+    Games,
+}
+```
+
+### `TrustedFilter`
+
+```rust
+pub enum TrustedFilter {
+    NoFilter,
+    TrustedOnly,
+    NoRemakes,
+}
+```
+
+### `SortBy`
+
+```rust
+pub enum SortBy {
+    Comments,
+    Size,
+    Date,
+    Seeders,
+    Leechers,
+    Downloads,
+}
+```
+
+### `Order`
+
+```rust
+pub enum Order {
+    Desc,
+    Asc,
+}
+```
+
+### `NyaaOptions` and modes
+
+```rust
+pub enum NyaaMode {
+    Html,
+    Rss,
+}
+
+pub struct NyaaOptions {
+    pub base_url: String,
+    pub mode: NyaaMode,
+}
+```
+
+`NyaaOptions` implements `Default` with `base_url = "https://nyaa.si"` and `mode = NyaaMode::Html`.
+
+---
 
 ## RSS Mode
 
-```js
-const nyaa = new Nyaa({
-    baseUrl: 'https://nyaa.si',
-    mode: 'rss',
-});
+```rust
+use nyaapi_rs::{Nyaa, NyaaMode, NyaaOptions};
 
-const result = await nyaa.search('One Piece');
+#[tokio::main]
+async fn main() {
+    let nyaa = Nyaa::new(NyaaOptions {
+        base_url: "https://nyaa.si".to_string(),
+        mode: NyaaMode::Rss,
+    });
+
+    let result = nyaa.search("Anime").await.unwrap();
+    // `total`, `page`, and `total_page` are not available in RSS mode
+    for torrent in result.data {
+        println!("{}", torrent.name);
+    }
+}
 ```
+
+## Features
+
+- Async-first API built on `reqwest` and `tokio`
+- HTML and RSS parsing
+- Search, user search, view, and categories
+- Strongly typed options and results
+- `DateTime<Utc>` for all timestamps
+
+## Contributing
+
+Pull requests are welcome. Please open an issue first to discuss major changes.
 
 ## License
 
-[MIT ©](/LICENSE)
+[MIT](/LICENSE)
 
 ## Disclaimer
 
 This is an unofficial API for nyaa. I am not affiliated with nyaa in any way. Use at your own risk.
-
-## Contributing
-
-Pull requests are welcome.
