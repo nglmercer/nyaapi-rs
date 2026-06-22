@@ -1,56 +1,42 @@
-<h1 align="center">nyaa-sia</h1>
+<h1 align="center">nyaapi-rs</h1>
 
 This is an unofficial API for nyaa - https://nyaa.si or https://nyaa.land or whatever domain you want to use. This allows you to search for torrents by name, category, or even user. Use at your own risk.
 
 <div align="center">
 
-[![npm](https://img.shields.io/npm/v/nyaa-sia?style=flat-square)](https://www.npmjs.com/package/nyaa-sia)
-[![npm](https://img.shields.io/npm/dt/nyaa-sia?style=flat-square)](https://www.npmjs.com/package/nyaa-sia)
-![NPM](https://img.shields.io/npm/l/nyaa-sia)
+[![npm](https://img.shields.io/crates/v/nyaapi-rs?style=flat-square)](https://crates.io/crates/nyaapi-rs)
+[![npm](https://img.shields.io/crates/d/nyaapi-rs?style=flat-square)](https://crates.io/crates/nyaapi-rs)
+![NPM](https://img.shields.io/crates/l/nyaapi-rs)
 
 </div>
 
 ## Install
 
+```toml
+[dependencies]
+nyaapi-rs = "0.1"
+```
+
 ```bash
-npm install --save nyaa-sia
-yarn add nyaa-sia
-pnpm add nyaa-sia
-bun add nyaa-sia
+cargo add nyaapi-rs
 ```
 
 ## Usage
 
-```js
-import { Nyaa } from 'nyaa-sia';
+```rust
+use nyaapi_rs::{Nyaa, NyaaOptions, NyaaMode};
 
-const nyaa = new Nyaa({
-    baseUrl: 'https://nyaa.si',
-    mode: 'html',
-});
+#[tokio::main]
+async fn main() {
+    let nyaa = Nyaa::new(NyaaOptions {
+        base_url: "https://nyaa.si".to_string(),
+        mode: NyaaMode::Html,
+    });
 
-const result = await nyaa.search('One Piece', {
-    page: 1,
-    category: 'anime',
-    filter: 'no filter',
-    sort: 'date',
-    order: 'desc',
-});
+    let result = nyaa.search("One Piece").await.unwrap();
 
-console.log(result.data);
-
-/**
- * {
- *     data: [{ id: 1234567, name: 'One Piece', ... }],
- *     total: 100,
- *     page: 1,
- *     totalPage: 10,
- *     perPage: 75,
- *     range: '1-75',
- *     nextPage: true,
- *     timeTaken: 150
- * }
- */
+    println!("{:#?}", result.data);
+}
 ```
 
 ## API

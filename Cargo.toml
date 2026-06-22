@@ -1,11 +1,11 @@
 [package]
-name = "nyaa-api"
+name = "nyaapi-rs"
 version = "0.1.0"
 edition = "2021"
 description = "Unofficial API wrapper for nyaa.si"
 authors = ["nglmercer"]
 license = "MIT"
-repository = "https://github.com/nglmercer/nyaa-api"
+repository = "https://github.com/nglmercer/nyaapi-rs"
 
 [dependencies]
 reqwest = { version = "0.12", default-features = false, features = ["gzip", "brotli", "rustls-tls"] }
