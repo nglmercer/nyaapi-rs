@@ -10,15 +10,8 @@ Cargo.lock
 /doc/
 
 # IDE
-.vscode/
 .idea/
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Old JS artifacts (keep for migration reference, remove if desired)
-node_modules/
-dist/
-bun.lock
-package.json

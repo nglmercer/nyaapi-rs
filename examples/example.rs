@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use nyaa_api::{Nyaa, NyaaMode, NyaaOptions};
+use nyaapi_rs::{Nyaa, NyaaMode, NyaaOptions};
 
 #[derive(Parser)]
 #[command(name = "nyaa-cli")]
@@ -69,8 +69,8 @@ fn parse_mode(mode: &str) -> NyaaMode {
     }
 }
 
-fn to_category(s: Option<&str>) -> Option<nyaa_api::CategoryFilter> {
-    use nyaa_api::CategoryFilter;
+fn to_category(s: Option<&str>) -> Option<nyaapi_rs::CategoryFilter> {
+    use nyaapi_rs::CategoryFilter;
     s.and_then(|v| match v {
         "anime" => Some(CategoryFilter::Anime),
         "audio" => Some(CategoryFilter::Audio),
@@ -84,8 +84,8 @@ fn to_category(s: Option<&str>) -> Option<nyaa_api::CategoryFilter> {
     })
 }
 
-fn to_filter(s: Option<&str>) -> Option<nyaa_api::TrustedFilter> {
-    use nyaa_api::TrustedFilter;
+fn to_filter(s: Option<&str>) -> Option<nyaapi_rs::TrustedFilter> {
+    use nyaapi_rs::TrustedFilter;
     s.and_then(|v| match v {
         "no-filter" | "no filter" => Some(TrustedFilter::NoFilter),
         "trusted-only" | "trusted only" => Some(TrustedFilter::TrustedOnly),
@@ -94,8 +94,8 @@ fn to_filter(s: Option<&str>) -> Option<nyaa_api::TrustedFilter> {
     })
 }
 
-fn to_sort(s: Option<&str>) -> Option<nyaa_api::SortBy> {
-    use nyaa_api::SortBy;
+fn to_sort(s: Option<&str>) -> Option<nyaapi_rs::SortBy> {
+    use nyaapi_rs::SortBy;
     s.and_then(|v| match v {
         "comments" => Some(SortBy::Comments),
         "size" => Some(SortBy::Size),
@@ -107,8 +107,8 @@ fn to_sort(s: Option<&str>) -> Option<nyaa_api::SortBy> {
     })
 }
 
-fn to_order(s: Option<&str>) -> Option<nyaa_api::Order> {
-    use nyaa_api::Order;
+fn to_order(s: Option<&str>) -> Option<nyaapi_rs::Order> {
+    use nyaapi_rs::Order;
     s.and_then(|v| match v {
         "asc" => Some(Order::Asc),
         "desc" => Some(Order::Desc),
@@ -133,7 +133,7 @@ async fn main() {
             order,
             page,
         } => {
-            let opts = nyaa_api::SearchOptions {
+            let opts = nyaapi_rs::SearchOptions {
                 page: Some(page),
                 category: to_category(category.as_deref()),
                 filter: to_filter(filter.as_deref()),
@@ -169,7 +169,7 @@ async fn main() {
             order,
             page,
         } => {
-            let opts = nyaa_api::SearchByUserOptions {
+            let opts = nyaapi_rs::SearchByUserOptions {
                 page: Some(page),
                 category: to_category(category.as_deref()),
                 filter: to_filter(filter.as_deref()),
