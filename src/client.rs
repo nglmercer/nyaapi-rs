@@ -78,11 +78,7 @@ impl Nyaa {
         )?;
         let html = reqwest::get(&url).await?.text().await?;
         let torrents = parser::search::parse_search_results(&html);
-        let pagination = if !query.is_empty() {
-            parser::search::parse_pagination(&html)
-        } else {
-            None
-        };
+        let pagination = parser::search::parse_pagination(&html);
         let per_page = torrents.len();
 
         Ok(SearchResult {
