@@ -1,0 +1,22 @@
+[package]
+name = "nyaa-api"
+version = "0.1.0"
+edition = "2021"
+description = "Unofficial API wrapper for nyaa.si"
+authors = ["nglmercer"]
+license = "MIT"
+repository = "https://github.com/nglmercer/nyaa-api"
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["gzip", "brotli", "rustls-tls"] }
+scraper = "0.20"
+quick-xml = { version = "0.37", features = ["serialize"] }
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+url = "2"
+percent-encoding = "2"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "rt"] }
+clap = { version = "4", features = ["derive"] }
